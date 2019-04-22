@@ -1,29 +1,34 @@
 .section .init
 .globl _start
 _start:
-	ldr r0,=0x20200000
-	mov r1,#1
-	lsl r1,#18
-	str r1,[r0,#4]
+	mov sp, #0x8000
+	b main
 
-	mov r1,#1
-	lsl r1,#15
+.section .text
+main:
+	pin_nr .req r0
+	pin_f .req r1
+	mov pin_nr,#47
+	mov pin_f,#1
+	bl set_gpio_fn
+	.unreq pin_f
+
+	pin_val .req r1
 loop$:
-	str r1,[r0,#44]
+	mov pin_nr,#47
+	mov pin_val,#0
+	bl set_gpio
 
-	mov r2,#0x3f0000
-wait1$:
-	sub r2,#1
-	cmp r2,#0
-	bne wait1$
+	bl wait
 
-	str r1,[r0,#32]
+	mov pin_nr,#47
+	mov pin_val,#1
+	bl set_gpio
 
-	mov r2,#0x3f0000
-wait2$:
-	sub r2,#1
-	cmp r2,#0
-	bne wait2$
+	bl wait
+
+	.unreq pin_val
+	.unreq pin_nr
 
 	b loop$
 
