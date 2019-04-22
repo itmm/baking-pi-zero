@@ -6,47 +6,86 @@ _start:
 
 .section .text
 main:
-	pin_nr .req r0
-	delay .req r0
-	pin_f .req r1
-	mov pin_nr,#47
-	mov pin_f,#1
+	mov r0, #1024
+	mov r1, #768
+	mov r2, #16
+	bl init_framebuffer
+	teq r0,#0
+	bne no_error$
+
+	mov r0, #47
+	mov r1, #1
 	bl set_gpio_fn
-	.unreq pin_f
 
-	pin_val .req r1
-	ptrn .req r4
-	ldr ptrn,=pattern
-	ldr ptrn,[ptrn]
-	seq .req r5
-	mov seq,#0
-
-loop$:
-	mov r1,#1
-	lsl r1,seq
-	and r1,ptrn
-	teq pin_val,#0
-	
-	moveq pin_val,#0
-	movne pin_val,#1
-	mov pin_nr,#47
+error$:
+	mov r0, #47
+	mov r1, #1
 	bl set_gpio
 
-	ldr delay,=300000
+	ldr r0, =250000
 	bl wait
 
-	add seq,seq,#1
-	and seq,seq,#0x1f
+	mov r0, #47
+	mov r1, #0
+	bl set_gpio
 
-	b loop$
+	ldr r0, =250000
+	bl wait
 
-	.unreq ptrn
-	.unreq seq
-	.unreq pin_val
-	.unreq pin_nr
-	.unreq delay
+	b error$
 
-.section .data
-.align 2
-pattern:
-	.int 0b11111111101010100010001000101010
+no_error$:
+	fb_info_addr .req r4
+	mov fb_info_addr, r0
+
+render$:
+	fb_addr .req r3
+	ldr fb_addr,[fb_info_addr,#16]
+
+	color .req r0
+	y .req r1
+	mov y, #768
+	
+	draw_row$:
+		x .req r2
+		mov x,#1024
+		draw_pixel$:
+			strh color,[fb_addr]
+			add fb_addr,#2
+			sub x,#1
+			teq x,#0
+			bne draw_pixel$
+
+		sub y, #1
+		add color,#1
+		teq y, #0
+		bne draw_row$
+
+/*
+	mov r0, #47
+	mov r1, #1
+	bl set_gpio_fn
+
+render2$:
+	mov r0, #47
+	mov r1, #1
+	bl set_gpio
+
+	ldr r0, =250000
+	bl wait
+
+	mov r0, #47
+	mov r1, #0
+	bl set_gpio
+
+	ldr r0, =750000
+	bl wait
+
+	b render2$
+*/
+
+	b render$
+
+	.unreq fb_addr
+	.unreq fb_info_addr
+
