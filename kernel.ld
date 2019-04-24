@@ -19,7 +19,7 @@ SECTIONS {
 	* Next we put the rest of the code.
 	*/
 	.text : {
-		*(.text)
+		*(.text*)
 	}
 	
 	/* 

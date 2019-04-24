@@ -30,6 +30,7 @@ LINKER = kernel.ld
 # The names of all object files that must be generated. Deduced from the 
 # assembly code files in source.
 OBJECTS := $(patsubst $(SOURCE)%.s,$(BUILD)%.o,$(wildcard $(SOURCE)*.s))
+OBJECTS += $(patsubst $(SOURCE)%.cpp,$(BUILD)%.o,$(wildcard $(SOURCE)*.cpp))
 
 # Rule to make everything.
 all: $(TARGET) $(LIST)
@@ -47,11 +48,15 @@ $(TARGET) : $(BUILD)output.elf
 
 # Rule to make the elf file.
 $(BUILD)output.elf : $(OBJECTS) $(LINKER)
-	$(ARMGNU)-ld --no-undefined $(OBJECTS) -Map $(MAP) -o $(BUILD)output.elf -T $(LINKER)
+	$(ARMGNU)-ld -nostdlib --no-undefined $(OBJECTS) -Map $(MAP) -o $(BUILD)output.elf -T $(LINKER)
 
 # Rule to make the object files.
 $(BUILD)%.o: $(SOURCE)%.s $(BUILD)
 	$(ARMGNU)-as -I $(SOURCE) $< -o $@
+
+# Rule to make the object files.
+$(BUILD)%.o: $(SOURCE)%.cpp
+	$(ARMGNU)-g++ -nostdlib -fomit-frame-pointer -Os -fno-exceptions -I $(SOURCE) -c $< -o $@
 
 $(BUILD):
 	mkdir $@
